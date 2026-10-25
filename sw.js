@@ -1,5 +1,6 @@
-// Offline support: serve from cache first, refresh the cache in the background.
-const CACHE = 'nmn-v1';
+// Offline support. The app's own files: network first (so updates show up at once),
+// falling back to the cache when offline. Fonts and libraries from CDNs: cache first.
+const CACHE = 'nmn-v2';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
   ...Array.from({length: 10}, (_, i) => 'data/l' + (i + 1) + '.json')];
 
@@ -14,13 +15,26 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.hostname === 'api.anthropic.com') return;
   e.respondWith(caches.open(CACHE).then(async cache => {
-    const hit = await cache.match(e.request, {ignoreSearch: true});
-    const fresh = fetch(e.request).then(res => {
-      if (res && (res.ok || res.type === 'opaque')) cache.put(e.request, res.clone());
-      return res;
-    }).catch(() => hit);
-    return hit || fresh;
+    if (url.origin === location.origin) {
+      try {
+        const res = await fetch(req);
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      } catch (err) {
+        const hit = await cache.match(req, {ignoreSearch: true});
+        if (hit) return hit;
+        throw err;
+      }
+    }
+    const hit = await cache.match(req);
+    if (hit) return hit;
+    const res = await fetch(req);
+    if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+    return res;
   }));
 });

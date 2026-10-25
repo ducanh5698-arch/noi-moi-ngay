@@ -138,11 +138,34 @@ summary::-webkit-details-marker{display:none}
 .seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:5;
   padding:6px max(16px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-nav.tabs .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
-nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:12px;font-weight:600;color:var(--muted);border-radius:12px;position:relative}
+nav.tabs .in{max-width:620px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.tabs button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:11.5px;white-space:nowrap;font-weight:600;color:var(--muted);border-radius:12px;position:relative}
 nav.tabs button svg{width:22px;height:22px}
 nav.tabs button.on{color:var(--jade)}
 nav.tabs .badge{position:absolute;top:2px;left:calc(50% + 6px);background:var(--saffron);color:#1d1503;font-size:10.5px;padding:0 5px;border-radius:99px;font-variant-numeric:tabular-nums}
+/* chat */
+.chat{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;display:flex;flex-direction:column;gap:6px}
+.msg.bot{align-self:flex-start}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.bubble{padding:11px 14px;border-radius:16px;line-height:1.45;font-size:16px}
+.bot .bubble{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.me .bubble{background:var(--jade);color:var(--jade-ink);border-bottom-right-radius:4px}
+.bubble .tr{display:block;font-size:14px;color:var(--muted);margin-top:6px;border-top:1px dashed var(--line);padding-top:6px}
+.tools{display:flex;gap:6px}
+.tools button{font-size:12.5px;color:var(--muted);padding:3px 10px;border-radius:99px;background:var(--surface-2)}
+.note{font-size:14px;background:var(--warn-soft);border-radius:12px;padding:9px 12px;max-width:100%}
+.note.good{background:var(--jade-soft)}
+.note b{font-weight:600}
+.composer{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px 4px;display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;min-width:0}
+.icon-btn.mic.rec{background:var(--saffron);color:#1d1503;animation:pulse 1.2s infinite}
+.tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
+.tick.on{background:var(--jade);border-color:var(--jade);color:var(--jade-ink)}
+.tick svg{width:13px;height:13px}
+.targets .li{padding:8px 0}
+.summary-score{font-family:var(--display);font-weight:800;font-size:44px;color:var(--jade);line-height:1}
+input[type=password]{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 14px;width:100%}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:9;width:max-content;max-width:min(92vw,460px);
   background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
 .loading{padding:60px 0;text-align:center;color:var(--muted)}
@@ -155,6 +178,7 @@ nav.tabs .badge{position:absolute;top:2px;left:calc(50% + 6px);background:var(--
   <button data-go="home" id="t-home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Hôm nay</button>
   <button data-go="review" id="t-review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Ôn tập<span class="badge" id="rv-badge" hidden></span></button>
   <button data-go="speak" id="t-speak"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>Luyện nói</button>
+  <button data-go="chat" id="t-chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1.1-4.6A8 8 0 1 1 21 12z"/></svg>Bot</button>
   <button data-go="levels" id="t-levels"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M10 20V9M16 20V5M22 20H2"/></svg>Lộ trình</button>
 </div></nav>
 
@@ -175,7 +199,7 @@ let S = fresh();
 let view = 'home', ui = {};
 const $app = document.getElementById('app');
 
-function fresh(){ return {daily:10, rate:0.9, voice:'', cursor:0, learned:{}, days:{}, pron:{}, updatedAt:0}; }
+function fresh(){ return {daily:10, rate:0.9, voice:'', botModel:'claude-opus-5-5', cursor:0, learned:{}, days:{}, pron:{}, updatedAt:0}; }
 function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function dstr(d){ const z = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()); }
 function today(){ return dstr(new Date()); }
@@ -379,6 +403,173 @@ function pronBlock(id){
   return out + '</div>';
 }
 
+/* ---------- bot: Claude API with the learner's own key, kept only on this phone ---------- */
+const API_KEY_STORE = 'nmn-api-key';
+const SDK_URL = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0/+esm';
+const MODELS = [['claude-opus-5-5','Opus 5.5 (kỹ nhất)'], ['claude-haiku-5-5','Haiku 5.5 (rẻ, nhanh)']];
+function apiKey(){ try{ return localStorage.getItem(API_KEY_STORE) || ''; }catch(e){ return ''; } }
+function setApiKey(k){ try{ k ? localStorage.setItem(API_KEY_STORE, k) : localStorage.removeItem(API_KEY_STORE); }catch(e){} client = null; }
+let sdk = null, client = null;
+async function getClient(){
+  const k = apiKey(); if(!k) throw {vi:'Chưa có mã API. Dán mã ở phần Cài đặt trên trang Hôm nay.'};
+  if(!sdk) sdk = await import(SDK_URL).catch(() => { throw {vi:'Không tải được bộ kết nối bot. Kiểm tra mạng rồi thử lại.'}; });
+  if(!client){ const Anthropic = sdk.default || sdk.Anthropic; client = new Anthropic({apiKey:k, dangerouslyAllowBrowser:true, maxRetries:2}); }
+  return client;
+}
+function botError(e){
+  if(e && e.vi) return e.vi;
+  if(!navigator.onLine) return 'Điện thoại đang không có mạng.';
+  const s = e && e.status, m = String(e && e.message || '');
+  if(sdk && e instanceof sdk.AuthenticationError || s === 401) return 'Mã API không đúng hoặc đã bị xóa. Kiểm tra lại trong Cài đặt.';
+  if(s === 403) return 'Mã API này chưa được dùng mô hình đã chọn. Thử chọn mô hình khác trong Cài đặt.';
+  if(s === 400 && /credit|balance|billing/i.test(m)) return 'Tài khoản API hết tiền. Nạp thêm ở console.anthropic.com → Billing.';
+  if(sdk && e instanceof sdk.RateLimitError || s === 429) return 'Gửi quá nhanh hoặc vượt hạn mức. Đợi một chút rồi thử lại.';
+  if(s >= 500) return 'Máy chủ Claude đang bận. Thử lại sau ít phút.';
+  if(sdk && e instanceof sdk.APIConnectionError) return 'Không kết nối được tới Claude. Kiểm tra mạng rồi thử lại.';
+  return 'Bot chưa trả lời được. Thử lại nhé.';
+}
+async function askClaude({system, messages, schema, effort}){
+  const c = await getClient();
+  const model = S.botModel || MODELS[0][0];
+  const params = {model, max_tokens:8000, system, messages, output_config:{effort, format:{type:'json_schema', schema}}};
+  // Opus may decline rare inputs; server-side fallback retries them on another model automatically.
+  const res = model === 'claude-opus-5-5'
+    ? await c.beta.messages.create({...params, betas:['server-side-fallback-2026-07-01'], fallbacks:'default'})
+    : await c.messages.create(params);
+  if(res.stop_reason === 'refusal') throw {vi:'Bot không trả lời câu này. Thử nói theo cách khác.'};
+  if(res.stop_reason === 'max_tokens') throw {vi:'Câu trả lời bị cắt ngắn. Thử lại nhé.'};
+  const t = res.content.find(b => b.type === 'text');
+  if(!t) throw {vi:'Bot không trả lời. Thử lại nhé.'};
+  return JSON.parse(t.text);
+}
+const CHAT_SCHEMA = {type:'object', additionalProperties:false, required:['reply','reply_vi','feedback','better','used'], properties:{
+  reply:{type:'string'}, reply_vi:{type:'string'}, feedback:{type:'string'}, better:{type:'string'}, used:{type:'array', items:{type:'integer'}}}};
+const SUMMARY_SCHEMA = {type:'object', additionalProperties:false, required:['score','praise','mistakes','tips'], properties:{
+  score:{type:'integer'}, praise:{type:'string'},
+  mistakes:{type:'array', items:{type:'object', additionalProperties:false, required:['wrong','right','why'], properties:{wrong:{type:'string'}, right:{type:'string'}, why:{type:'string'}}}},
+  tips:{type:'array', items:{type:'string'}}}};
+const CHAT_STORE = 'nmn-chat-';
+function chatState(){
+  if(!ui.chat){ let c = null; try{ c = JSON.parse(localStorage.getItem(CHAT_STORE + today())); }catch(e){} ui.chat = c || {msgs:[], used:[], summary:null}; }
+  return ui.chat;
+}
+function saveChat(c){ try{ localStorage.setItem(CHAT_STORE + today(), JSON.stringify(c || ui.chat)); }catch(e){} }
+function chatTargets(){
+  const p = plan();
+  if(p.ids.length && p.learn) return p.ids;
+  const recent = Object.keys(S.learned).map(Number).sort((a,b) => b-a).slice(0, 10);
+  return recent.length ? recent : p.ids;
+}
+function chatSystem(targets){
+  const lv = curLevel();
+  return `You are Mia, a warm, patient English conversation partner for a Vietnamese adult learning spoken, everyday English (current level ${lv.level}/10: "${lv.name}"). The learner learns by listening first, the way children do.
+Today's target sentences (the learner just studied these):
+${targets.map((id,k) => `${k+1}. ${ALL[id].en}`).join('\n')}
+
+Run a natural role-play (a cafe, work, meeting a new friend, travelling: pick a scene that fits most target sentences). Create moments where the learner can naturally say the target sentences, and use some of them yourself.
+- Speak simple, natural spoken English: at most 2 short sentences, then one easy question so the learner has to answer.
+- Stay in the role-play. If the learner writes Vietnamese, show them how to say it in English and continue.
+- The learner's messages may come from speech recognition, so ignore missing punctuation and capital letters.
+- "feedback" is in Vietnamese, short and kind: correct grammar or word-choice mistakes in the learner's LAST message and say why in a few words; if it was correct and natural, praise briefly; empty on your first turn.
+- "better" is a more natural English version of the learner's last message, or empty if it was already good.
+- "used" lists the numbers of target sentences the learner used, even roughly, in their last message.
+- "reply_vi" is the Vietnamese translation of "reply".`;
+}
+async function botTurn(){
+  const c = chatState(), targets = chatTargets();
+  const messages = [{role:'user', content:'(Start the role-play now: set the scene in one short sentence and greet me.)'}];
+  for(const m of c.msgs.slice(-30)) messages.push({role: m.role === 'bot' ? 'assistant' : 'user', content: m.text});
+  if(messages[messages.length-1].role !== 'user') return;
+  ui.busy = true; ui.err = null; vChat(); scrollChat();
+  try{
+    const r = await askClaude({system: chatSystem(targets), messages, schema: CHAT_SCHEMA, effort:'low'});
+    const last = [...c.msgs].reverse().find(m => m.role === 'user');
+    if(last && !last.checked){ last.feedback = String(r.feedback || ''); last.better = String(r.better || ''); last.checked = true; }
+    (r.used || []).forEach(n => { const id = targets[Number(n)-1]; if(id !== undefined && !c.used.includes(id)) c.used.push(id); });
+    c.msgs.push({role:'bot', text:String(r.reply || '…'), vi:String(r.reply_vi || '')});
+    saveChat(c);
+    if(view === 'chat') speak(String(r.reply || ''));
+  }catch(e){ ui.err = botError(e); }
+  ui.busy = false; if(view === 'chat'){ vChat(); scrollChat(); }
+}
+async function endChat(){
+  const c = chatState();
+  const transcript = c.msgs.map(m => (m.role === 'bot' ? 'Mia: ' : 'Learner: ') + m.text).join('\n');
+  ui.busy = 'sum'; ui.err = null; vChat(); scrollChat();
+  try{
+    const r = await askClaude({
+      system:'You are an English speaking coach for a Vietnamese learner. Evaluate only the learner\'s English. Write praise, why and tips in Vietnamese; wrong and right stay in English. List at most 4 mistakes and 2-3 short tips for next time. Score 1-10.',
+      messages:[{role:'user', content:`Today's practice conversation:\n\n${transcript}\n\nTarget sentences: ${chatTargets().map(id => ALL[id].en).join(' | ')}`}],
+      schema: SUMMARY_SCHEMA, effort:'medium'});
+    c.summary = {score: Math.max(1, Math.min(10, parseInt(r.score) || 5)), praise:String(r.praise || ''), mistakes:(r.mistakes || []).slice(0,4), tips:(r.tips || []).slice(0,3)};
+    saveChat(c);
+    const p = plan(); p.chat = true; p.score = c.summary.score; save();
+  }catch(e){ ui.err = botError(e); }
+  ui.busy = false; if(view === 'chat'){ vChat(); scrollChat(); }
+}
+async function dictate(){
+  if(ui.dictating){ stopRecording(); return; }
+  ui.dictating = true; vChat();
+  try{
+    const alts = await recordOnce();
+    ui.draft = ((ui.draft || '').trim() + ' ' + alts[0].t).trim();
+  }catch(code){ if(code !== 'aborted') toast(pronMsg(code)); }
+  ui.dictating = false; if(view === 'chat') vChat();
+}
+function scrollChat(){ const el = document.getElementById('chat-end'); if(el) el.scrollIntoView({block:'end'}); }
+function keyForm(){
+  return `<div class="stack" style="gap:8px">
+    <label for="set-key" style="font-weight:600">Mã API Claude</label>
+    <div class="row" style="flex-wrap:nowrap"><input id="set-key" type="password" autocomplete="off" placeholder="${apiKey() ? 'Đã lưu mã. Dán mã mới để thay.' : 'sk-ant-…'}" style="flex:1;min-width:0"><button class="btn primary" data-act="key-save">Lưu</button></div>
+    <p class="small muted">Tạo mã ở <b>console.anthropic.com</b> → API Keys, và nạp tiền ở mục Billing. Mỗi buổi trò chuyện tốn vài nghìn đồng. Mã chỉ lưu trên điện thoại này và chỉ gửi tới Anthropic.</p>
+    ${apiKey() ? `<button class="btn ghost" data-act="key-clear" style="align-self:flex-start">Xóa mã khỏi điện thoại</button>` : ''}
+  </div>`;
+}
+function vChat(){
+  if(view !== 'chat') return;
+  const c = chatState(), targets = chatTargets();
+  if(!apiKey()){
+    $app.innerHTML = `<div class="stack"><h1>Nói với bot</h1>
+      <div class="card stack"><h3>Kết nối bot Mia</h3><p class="muted">Mia là bot Claude đóng vai người nói chuyện với bạn, dùng lại các câu đã học và sửa lỗi từng câu bạn nói. Để dùng, hãy dán mã API Claude của bạn.</p>${keyForm()}</div></div>`;
+    return;
+  }
+  const userTurns = c.msgs.filter(m => m.role === 'user').length;
+  const usedN = targets.filter(id => c.used.includes(id)).length;
+  const sum = c.summary;
+  const msgs = c.msgs.map((m, k) => m.role === 'bot'
+    ? `<div class="msg bot"><div class="bubble">${esc(m.text)}${ui.showVi && ui.showVi[k] && m.vi ? `<span class="tr">${esc(m.vi)}</span>` : ''}</div>
+        <div class="tools"><button data-saytext="${k}">Nghe lại</button>${m.vi ? `<button data-vi="${k}">${ui.showVi && ui.showVi[k] ? 'Ẩn nghĩa' : 'Dịch'}</button>` : ''}</div></div>`
+    : `<div class="msg me"><div class="bubble">${esc(m.text)}</div>
+        ${m.checked ? (m.better ? `<div class="note">${m.feedback ? esc(m.feedback) + '<br>' : ''}<b>Nói tự nhiên hơn:</b> ${esc(m.better)}</div>` : m.feedback ? `<div class="note good">${esc(m.feedback)}</div>` : '') : ''}</div>`).join('');
+  $app.innerHTML = `<div class="stack">
+    <div class="row" style="justify-content:space-between"><h1>Nói với bot</h1>${userTurns >= 3 && !sum ? `<button class="btn ghost" data-act="chat-end" ${ui.busy ? 'disabled' : ''}>Kết thúc & chấm điểm</button>` : ''}</div>
+    <details class="card targets" ${ui.openTargets ? 'open' : ''} id="tg"><summary><span>Câu nên dùng hôm nay</span><span class="chip ${usedN === targets.length ? 'done' : ''}">${usedN}/${targets.length} đã dùng</span></summary>
+      <div class="list">${targets.map(id => `<div class="li"><span class="tick ${c.used.includes(id) ? 'on' : ''}">${c.used.includes(id) ? ICON.check : ''}</span><div class="txt"><b>${esc(ALL[id].en)}</b><span class="muted small">${esc(ALL[id].vi)}</span></div></div>`).join('')}</div></details>
+    <div class="chat">
+      ${!c.msgs.length && !ui.busy ? `<div class="card stack center"><h3>Sẵn sàng luyện nói?</h3><p class="small muted">Mia mở một tình huống và đọc to câu của mình. Bạn trả lời bằng cách bấm micro để nói, hoặc gõ phím. Mỗi câu của bạn đều được sửa lỗi.</p><button class="btn primary" data-act="chat-start">Bắt đầu trò chuyện</button></div>` : ''}
+      ${msgs}
+      ${ui.busy ? `<div class="msg bot"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span>${ui.busy === 'sum' ? ' <span class="small muted">Đang chấm điểm…</span>' : ''}</div></div>` : ''}
+      ${ui.err ? `<div class="note">${esc(ui.err)} <button class="btn ghost" data-act="chat-retry" style="padding:4px 12px;margin-left:6px">Thử lại</button></div>` : ''}
+      ${sum ? `<div class="card stack"><div class="row" style="flex-wrap:nowrap"><span class="summary-score">${sum.score}<span style="font-size:20px;color:var(--muted)">/10</span></span><div><h3>Nhận xét hôm nay</h3><p class="small muted">${esc(sum.praise)}</p></div></div>
+        ${sum.mistakes.length ? `<div class="stack" style="gap:8px"><span class="label">Cần sửa</span>${sum.mistakes.map(m => `<div class="note"><s>${esc(m.wrong)}</s> → <b>${esc(m.right)}</b><br><span class="small">${esc(m.why)}</span></div>`).join('')}</div>` : ''}
+        ${sum.tips.length ? `<div class="stack" style="gap:6px"><span class="label">Buổi sau</span>${sum.tips.map(t => `<p class="small">• ${esc(t)}</p>`).join('')}</div>` : ''}
+        <button class="btn ghost" data-act="chat-reset" style="align-self:flex-start">Trò chuyện lượt mới</button></div>` : ''}
+      <div id="chat-end"></div>
+    </div>
+    ${c.msgs.length && !sum ? `<div class="composer">
+      ${SR ? `<button class="icon-btn mic ${ui.dictating ? 'rec' : ''}" data-act="dictate" aria-label="Nói">${ICON.mic}</button>` : ''}
+      <textarea id="chat-in" rows="1" placeholder="${ui.dictating ? 'Đang nghe…' : 'Nói hoặc gõ tiếng Anh…'}">${esc(ui.draft || '')}</textarea>
+      <button class="btn primary" data-act="chat-send" ${ui.busy ? 'disabled' : ''}>Gửi</button></div>` : ''}
+  </div>`;
+  const tg = document.getElementById('tg'); if(tg) tg.ontoggle = () => ui.openTargets = tg.open;
+  const ta = document.getElementById('chat-in');
+  if(ta){
+    const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; };
+    ta.oninput = () => { ui.draft = ta.value; fit(); }; fit();
+    ta.onkeydown = e => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); act('chat-send'); } };
+  }
+}
+
 /* ---------- plan ---------- */
 function levelOf(id){ return ALL[id].level; }
 function curLevel(){ return LEVELS[levelOf(Math.min(S.cursor, ALL.length-1)) - 1]; }
@@ -414,10 +605,10 @@ function render(){
   if(!ALL.length) return;
   document.getElementById('tabs').hidden = false;
   const tabOf = {learn:'home', quiz:'home', listen:'home'}[view] || view;
-  ['home','review','speak','levels'].forEach(k => document.getElementById('t-'+k).classList.toggle('on', tabOf === k));
+  ['home','review','speak','chat','levels'].forEach(k => document.getElementById('t-'+k).classList.toggle('on', tabOf === k));
   const due = dueIds().length, b = document.getElementById('rv-badge');
   b.hidden = !due; b.textContent = due;
-  ({home:vHome, learn:vLearn, quiz:vQuiz, review:vReview, levels:vLevels, speak:vSpeak, listen:vListen}[view] || vHome)();
+  ({home:vHome, learn:vLearn, quiz:vQuiz, review:vReview, levels:vLevels, speak:vSpeak, listen:vListen, chat:vChat}[view] || vHome)();
 }
 function sentenceRow(id, extra){
   const s = ALL[id];
@@ -460,6 +651,11 @@ function vHome(){
         <p class="small muted">Đọc từng câu vào micro. Đạt ${PASS} điểm trở lên cho cả ${p.ids.length} câu là xong. Hiện: ${passed}/${p.ids.length}.</p>
         <div><button class="btn ${cur === 2 ? 'primary' : 'ghost'}" data-go="speak" ${p.learn ? '' : 'disabled'}>Luyện nói</button></div>
       </div></div>
+      <div class="step ${p.chat ? 'done' : (cur === -1 ? 'current' : '')}"><div class="num">4</div><div class="body stack" style="gap:8px">
+        <div class="row" style="justify-content:space-between"><h3>Cuối ngày: nói với bot</h3>${p.chat ? `<span class="chip done">${sz(ICON.check,12)} ${p.score}/10</span>` : (cur === -1 ? '<span class="chip now">Làm ngay</span>' : '<span class="chip">Chờ</span>')}</div>
+        <p class="small muted">Trò chuyện tình huống thật với Mia, dùng lại các câu hôm nay. Mia sửa lỗi từng câu và chấm điểm cuối buổi.</p>
+        <div><button class="btn ${cur === -1 && !p.chat ? 'primary' : 'ghost'}" data-go="chat">Nói với bot</button></div>
+      </div></div>
     </div></div>`}
     ${due ? `<button class="card row" data-go="review" style="justify-content:space-between;text-align:left"><div><h3>${due} câu cần ôn</h3><p class="small muted">Nghe lại đúng lúc sắp quên để nhớ lâu.</p></div><span class="btn primary">Ôn ngay</span></button>` : ''}
     <button class="card row" data-go="listen" style="justify-content:space-between;text-align:left"><div><h3>Nghe thụ động</h3><p class="small muted">Bật các câu đã học chạy liên tục, nghe khi đi đường, nấu ăn.</p></div><span class="btn ghost">Nghe</span></button>
@@ -476,10 +672,28 @@ function vHome(){
         </select><button class="btn ghost" data-act="voice-test">Nghe thử</button></div></div>
       <p class="small muted">Tiến độ lưu trên điện thoại này.${SR ? '' : ' Điện thoại này chưa hỗ trợ chấm phát âm, hãy mở bằng Chrome.'}</p>
     </div>
+    <div class="card stack">
+      <h3>Bot Mia</h3>
+      ${keyForm()}
+      <div class="row" style="justify-content:space-between;flex-wrap:nowrap"><label for="set-model">Mô hình</label>
+        <select id="set-model" style="width:auto;min-width:0;max-width:65%">${MODELS.map(([v,l]) => `<option value="${v}" ${v === S.botModel ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+    </div>
   </div>`;
   document.getElementById('set-daily').onchange = e => { S.daily = +e.target.value; replan(); save(); render(); };
   document.getElementById('set-rate').onchange = e => { S.rate = +e.target.value; save(); speak('This is how fast I will speak.'); };
   document.getElementById('set-voice').onchange = e => { S.voice = e.target.value; failedVoices.delete(S.voice); save(); speak('Hello! Nice to meet you.'); };
+  document.getElementById('set-model').onchange = e => { S.botModel = e.target.value; save(); toast('Đã đổi mô hình của bot.'); };
+}
+async function saveKey(){
+  const el = document.getElementById('set-key'), k = (el && el.value || '').trim();
+  if(!k){ toast('Hãy dán mã API vào ô trước.'); return; }
+  if(!/^sk-ant-/.test(k)){ toast('Mã API của Claude bắt đầu bằng "sk-ant-". Kiểm tra lại nhé.'); return; }
+  const old = apiKey(); setApiKey(k); toast('Đang kiểm tra mã…');
+  try{
+    const c = await getClient();
+    await c.models.retrieve(S.botModel || MODELS[0][0]);
+    toast('Đã lưu mã. Bot Mia sẵn sàng!'); render();
+  }catch(e){ setApiKey(old); toast(botError(e)); }
 }
 
 /* Learn: listen first, guess the meaning, see the words, shadow, then score. */
@@ -746,6 +960,18 @@ function act(a){
   else if(a === 'listen-skip'){ const was = ui.playing; stopListen(); stopSpeech(); ui.k = (ui.k + 1) % ui.ids.length; if(was) runListen(); else { vListen(); speak(ALL[ui.ids[ui.k]].en); } }
   else if(a === 'listen-text'){ ui.hideText = !ui.hideText; vListen(); }
   else if(a === 'voice-test'){ failedVoices.clear(); speak('Hello! Nice to meet you. How are you today?'); }
+  else if(a === 'key-save'){ saveKey(); }
+  else if(a === 'key-clear'){ setApiKey(''); toast('Đã xóa mã khỏi điện thoại.'); render(); }
+  else if(a === 'chat-start' || a === 'chat-retry'){ ui.err = null; botTurn(); }
+  else if(a === 'chat-send'){
+    const ta = document.getElementById('chat-in'), txt = (ta && ta.value || '').trim();
+    if(!txt || ui.busy) return;
+    if(ui.dictating) stopRecording();
+    chatState().msgs.push({role:'user', text:txt}); ui.draft = ''; saveChat(); botTurn();
+  }
+  else if(a === 'dictate'){ dictate(); }
+  else if(a === 'chat-end'){ endChat(); }
+  else if(a === 'chat-reset'){ ui.chat = {msgs:[], used:[], summary:null}; saveChat(); vChat(); }
 }
 
 document.addEventListener('click', e => {
@@ -755,6 +981,8 @@ document.addEventListener('click', e => {
   else if(d.say !== undefined){ speak(ALL[+d.say].en); }
   else if(d.sayslow !== undefined){ speak(ALL[+d.sayslow].en, 0.65); }
   else if(d.pron !== undefined){ doPron(+d.pron); }
+  else if(d.saytext !== undefined){ speak(chatState().msgs[+d.saytext].text); }
+  else if(d.vi !== undefined){ ui.showVi = ui.showVi || {}; ui.showVi[d.vi] = !ui.showVi[d.vi]; vChat(); }
   else if(d.tab){ ui.tab = d.tab; vSpeak(); }
   else if(d.learn !== undefined){ ui.i = +d.learn; vLearn(); window.scrollTo(0,0); }
   else if(d.lopt !== undefined){
