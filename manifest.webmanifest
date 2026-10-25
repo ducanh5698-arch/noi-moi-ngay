@@ -1,0 +1,17 @@
+{
+  "name": "Nói Mỗi Ngày",
+  "short_name": "Nói Mỗi Ngày",
+  "description": "Học 1000 câu giao tiếp tiếng Anh: nghe hiểu, nhại theo và chấm điểm phát âm.",
+  "lang": "vi",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef3f0",
+  "theme_color": "#16775a",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
