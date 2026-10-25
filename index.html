@@ -159,6 +159,14 @@ nav.tabs .badge{position:absolute;top:2px;left:calc(50% + 6px);background:var(--
 .note b{font-weight:600}
 .composer{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px 4px;display:flex;gap:8px;align-items:flex-end}
 .composer textarea{flex:1;min-width:0}
+.voice-dock{position:sticky;bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--bg);padding-block:10px 6px;display:flex;flex-direction:column;gap:10px}
+.voice-state{text-align:center;font-weight:600;color:var(--muted)}
+.talk{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;background:var(--saffron);color:#1d1503;flex:none;transition:transform .1s}
+.talk svg{width:32px;height:32px}
+.talk:active{transform:scale(.94)}
+.talk.listening{animation:pulse 1.2s infinite}
+.talk.speaking{background:var(--jade);color:var(--jade-ink)}
+.talk.thinking{opacity:.5}
 .icon-btn.mic.rec{background:var(--saffron);color:#1d1503;animation:pulse 1.2s infinite}
 .tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center}
 .tick.on{background:var(--jade);border-color:var(--jade);color:var(--jade-ink)}
@@ -480,17 +488,59 @@ async function botTurn(){
   const messages = [{role:'user', content:'(Start the role-play now: set the scene in one short sentence and greet me.)'}];
   for(const m of c.msgs.slice(-30)) messages.push({role: m.role === 'bot' ? 'assistant' : 'user', content: m.text});
   if(messages[messages.length-1].role !== 'user') return;
-  ui.busy = true; ui.err = null; vChat(); scrollChat();
+  ui.busy = true; ui.err = null; ui.phase = null; vChat(); scrollChat();
+  let reply = '';
   try{
     const r = await askClaude({system: chatSystem(targets), messages, schema: CHAT_SCHEMA, effort:'low'});
     const last = [...c.msgs].reverse().find(m => m.role === 'user');
     if(last && !last.checked){ last.feedback = String(r.feedback || ''); last.better = String(r.better || ''); last.checked = true; }
     (r.used || []).forEach(n => { const id = targets[Number(n)-1]; if(id !== undefined && !c.used.includes(id)) c.used.push(id); });
-    c.msgs.push({role:'bot', text:String(r.reply || '…'), vi:String(r.reply_vi || '')});
+    reply = String(r.reply || '…');
+    c.msgs.push({role:'bot', text:reply, vi:String(r.reply_vi || '')});
     saveChat(c);
-    if(view === 'chat') speak(String(r.reply || ''));
-  }catch(e){ ui.err = botError(e); }
-  ui.busy = false; if(view === 'chat'){ vChat(); scrollChat(); }
+  }catch(e){ ui.err = botError(e); ui.live = false; }
+  ui.busy = false;
+  if(view !== 'chat' || ui.chat !== c) return;
+  if(!reply){ vChat(); scrollChat(); return; }
+  // Live conversation: Mia speaks, then the mic opens for the learner's answer.
+  ui.phase = 'speaking'; vChat(); scrollChat();
+  await speak(reply);
+  if(view !== 'chat' || ui.chat !== c) return;
+  ui.phase = null;
+  if(ui.live && !c.summary){ await wait(250); if(ui.live && view === 'chat' && ui.chat === c) return listenTurn(); }
+  vChat();
+}
+async function listenTurn(){
+  const c = chatState();
+  ui.phase = 'listening'; vChat(); scrollChat();
+  let text = '';
+  try{ text = (await recordOnce())[0].t.trim(); }
+  catch(code){
+    if(view !== 'chat' || ui.chat !== c) return;
+    ui.phase = null; ui.live = false;
+    if(code !== 'aborted') toast(code === 'no-speech' ? 'Chưa nghe thấy gì. Chạm micro rồi nói nhé.' : pronMsg(code));
+    vChat(); return;
+  }
+  if(view !== 'chat' || ui.chat !== c) return;
+  ui.phase = null; ui.hint = null;
+  if(!text){ ui.live = false; vChat(); return; }
+  c.msgs.push({role:'user', text}); saveChat(c);
+  botTurn();
+}
+function abortRecording(){ try{ recog && recog.abort(); }catch(e){} }
+function talk(){
+  if(ui.busy) return;
+  if(ui.phase === 'listening'){ stopRecording(); return; }          // finish now and send what was heard
+  ui.live = true;
+  if(ui.phase === 'speaking'){ stopSpeech(); return; }              // skip Mia's line; the mic opens next
+  listenTurn();
+}
+function pauseTalk(){ ui.live = false; abortRecording(); stopSpeech(); ui.phase = null; vChat(); }
+function giveHint(){
+  const c = chatState(), left = chatTargets().filter(id => !c.used.includes(id));
+  const pool = left.length ? left : chatTargets();
+  ui.hint = pool[Math.floor(Math.random() * pool.length)];
+  vChat(); scrollChat();
 }
 async function endChat(){
   const c = chatState();
@@ -536,9 +586,12 @@ function vChat(){
   const userTurns = c.msgs.filter(m => m.role === 'user').length;
   const usedN = targets.filter(id => c.used.includes(id)).length;
   const sum = c.summary;
+  const voice = !!SR && S.chatMode !== 'text';
+  const hideBot = voice && S.hideBotText;
+  const shown = k => !hideBot || (ui.showEn && ui.showEn[k]);
   const msgs = c.msgs.map((m, k) => m.role === 'bot'
-    ? `<div class="msg bot"><div class="bubble">${esc(m.text)}${ui.showVi && ui.showVi[k] && m.vi ? `<span class="tr">${esc(m.vi)}</span>` : ''}</div>
-        <div class="tools"><button data-saytext="${k}">Nghe lại</button>${m.vi ? `<button data-vi="${k}">${ui.showVi && ui.showVi[k] ? 'Ẩn nghĩa' : 'Dịch'}</button>` : ''}</div></div>`
+    ? `<div class="msg bot"><div class="bubble">${shown(k) ? esc(m.text) : '<span class="muted">Mia đã nói. Nghe kỹ rồi trả lời nhé.</span>'}${ui.showVi && ui.showVi[k] && m.vi ? `<span class="tr">${esc(m.vi)}</span>` : ''}</div>
+        <div class="tools"><button data-saytext="${k}">Nghe lại</button>${hideBot ? `<button data-en="${k}">${shown(k) ? 'Ẩn chữ' : 'Hiện chữ'}</button>` : ''}${m.vi ? `<button data-vi="${k}">${ui.showVi && ui.showVi[k] ? 'Ẩn nghĩa' : 'Dịch'}</button>` : ''}</div></div>`
     : `<div class="msg me"><div class="bubble">${esc(m.text)}</div>
         ${m.checked ? (m.better ? `<div class="note">${m.feedback ? esc(m.feedback) + '<br>' : ''}<b>Nói tự nhiên hơn:</b> ${esc(m.better)}</div>` : m.feedback ? `<div class="note good">${esc(m.feedback)}</div>` : '') : ''}</div>`).join('');
   $app.innerHTML = `<div class="stack">
@@ -546,7 +599,11 @@ function vChat(){
     <details class="card targets" ${ui.openTargets ? 'open' : ''} id="tg"><summary><span>Câu nên dùng hôm nay</span><span class="chip ${usedN === targets.length ? 'done' : ''}">${usedN}/${targets.length} đã dùng</span></summary>
       <div class="list">${targets.map(id => `<div class="li"><span class="tick ${c.used.includes(id) ? 'on' : ''}">${c.used.includes(id) ? ICON.check : ''}</span><div class="txt"><b>${esc(ALL[id].en)}</b><span class="muted small">${esc(ALL[id].vi)}</span></div></div>`).join('')}</div></details>
     <div class="chat">
-      ${!c.msgs.length && !ui.busy ? `<div class="card stack center"><h3>Sẵn sàng luyện nói?</h3><p class="small muted">Mia mở một tình huống và đọc to câu của mình. Bạn trả lời bằng cách bấm micro để nói, hoặc gõ phím. Mỗi câu của bạn đều được sửa lỗi.</p><button class="btn primary" data-act="chat-start">Bắt đầu trò chuyện</button></div>` : ''}
+      ${!c.msgs.length && !ui.busy ? `<div class="card stack center"><h3>Sẵn sàng nói chuyện?</h3>
+        <p class="small muted">${voice ? 'Nói chuyện trực tiếp như gọi điện: Mia nói xong, micro tự bật để bạn trả lời. Bạn nói xong, Mia đáp lại ngay. Mỗi câu của bạn đều được sửa lỗi trên màn hình.' : 'Mia mở một tình huống, bạn gõ câu trả lời bằng tiếng Anh. Mỗi câu của bạn đều được sửa lỗi.'}</p>
+        ${voice ? `<label class="row small" style="justify-content:center"><input type="checkbox" id="hide-bot" ${S.hideBotText ? 'checked' : ''}> Ẩn chữ của Mia, chỉ nghe (luyện tai)</label>` : ''}
+        <button class="btn primary" data-act="chat-start">${voice ? 'Bắt đầu nói chuyện' : 'Bắt đầu trò chuyện'}</button>
+        ${SR ? `<button class="btn ghost" data-act="${voice ? 'mode-text' : 'mode-voice'}" style="align-self:center">${voice ? 'Muốn gõ phím thay vì nói' : 'Chuyển sang nói trực tiếp'}</button>` : ''}</div>` : ''}
       ${msgs}
       ${ui.busy ? `<div class="msg bot"><div class="bubble"><span class="typing"><i></i><i></i><i></i></span>${ui.busy === 'sum' ? ' <span class="small muted">Đang chấm điểm…</span>' : ''}</div></div>` : ''}
       ${ui.err ? `<div class="note">${esc(ui.err)} <button class="btn ghost" data-act="chat-retry" style="padding:4px 12px;margin-left:6px">Thử lại</button></div>` : ''}
@@ -556,12 +613,21 @@ function vChat(){
         <button class="btn ghost" data-act="chat-reset" style="align-self:flex-start">Trò chuyện lượt mới</button></div>` : ''}
       <div id="chat-end"></div>
     </div>
-    ${c.msgs.length && !sum ? `<div class="composer">
-      ${SR ? `<button class="icon-btn mic ${ui.dictating ? 'rec' : ''}" data-act="dictate" aria-label="Nói">${ICON.mic}</button>` : ''}
-      <textarea id="chat-in" rows="1" placeholder="${ui.dictating ? 'Đang nghe…' : 'Nói hoặc gõ tiếng Anh…'}">${esc(ui.draft || '')}</textarea>
-      <button class="btn primary" data-act="chat-send" ${ui.busy ? 'disabled' : ''}>Gửi</button></div>` : ''}
+    ${c.msgs.length && !sum ? (voice ? `<div class="voice-dock">
+      ${ui.hint != null ? `<div class="note">Thử nói: <b>${esc(ALL[ui.hint].en)}</b><br><span class="small">${esc(ALL[ui.hint].vi)}</span></div>` : ''}
+      <p class="voice-state">${ui.busy ? 'Mia đang nghĩ…' : ui.phase === 'speaking' ? 'Mia đang nói… (chạm để nói luôn)' : ui.phase === 'listening' ? 'Đang nghe bạn nói… (chạm khi nói xong)' : 'Chạm micro để nói'}</p>
+      <div class="row" style="justify-content:center;flex-wrap:nowrap;gap:16px">
+        <button class="btn ghost" data-act="hint">Gợi ý</button>
+        <button class="talk ${ui.busy ? 'thinking' : ui.phase || ''}" data-act="talk" aria-label="Nói">${ui.phase === 'speaking' ? ICON.play : ICON.mic}</button>
+        ${ui.live ? `<button class="btn ghost" data-act="pause">Dừng</button>` : `<button class="btn ghost" data-act="mode-text">Gõ phím</button>`}
+      </div></div>`
+    : `<div class="composer">
+      ${SR ? `<button class="icon-btn mic" data-act="mode-voice" aria-label="Nói trực tiếp">${ICON.mic}</button>` : ''}
+      <textarea id="chat-in" rows="1" placeholder="Gõ tiếng Anh…">${esc(ui.draft || '')}</textarea>
+      <button class="btn primary" data-act="chat-send" ${ui.busy ? 'disabled' : ''}>Gửi</button></div>`) : ''}
   </div>`;
   const tg = document.getElementById('tg'); if(tg) tg.ontoggle = () => ui.openTargets = tg.open;
+  const hb = document.getElementById('hide-bot'); if(hb) hb.onchange = () => { S.hideBotText = hb.checked; save(); };
   const ta = document.getElementById('chat-in');
   if(ta){
     const fit = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; };
@@ -962,7 +1028,17 @@ function act(a){
   else if(a === 'voice-test'){ failedVoices.clear(); speak('Hello! Nice to meet you. How are you today?'); }
   else if(a === 'key-save'){ saveKey(); }
   else if(a === 'key-clear'){ setApiKey(''); toast('Đã xóa mã khỏi điện thoại.'); render(); }
-  else if(a === 'chat-start' || a === 'chat-retry'){ ui.err = null; botTurn(); }
+  else if(a === 'chat-start'){ ui.err = null; ui.live = !!SR && S.chatMode !== 'text'; botTurn(); }
+  else if(a === 'chat-retry'){
+    ui.err = null;
+    const c = chatState();
+    if(c.msgs.length && c.msgs[c.msgs.length-1].role === 'bot'){ ui.live = true; listenTurn(); } else botTurn();
+  }
+  else if(a === 'talk'){ talk(); }
+  else if(a === 'pause'){ pauseTalk(); }
+  else if(a === 'hint'){ giveHint(); }
+  else if(a === 'mode-text'){ pauseTalk(); S.chatMode = 'text'; save(); vChat(); }
+  else if(a === 'mode-voice'){ S.chatMode = 'voice'; save(); ui.live = true; vChat(); const c = chatState(); if(c.msgs.length && !c.summary && !ui.busy) listenTurn(); }
   else if(a === 'chat-send'){
     const ta = document.getElementById('chat-in'), txt = (ta && ta.value || '').trim();
     if(!txt || ui.busy) return;
@@ -983,6 +1059,7 @@ document.addEventListener('click', e => {
   else if(d.pron !== undefined){ doPron(+d.pron); }
   else if(d.saytext !== undefined){ speak(chatState().msgs[+d.saytext].text); }
   else if(d.vi !== undefined){ ui.showVi = ui.showVi || {}; ui.showVi[d.vi] = !ui.showVi[d.vi]; vChat(); }
+  else if(d.en !== undefined){ ui.showEn = ui.showEn || {}; ui.showEn[d.en] = !ui.showEn[d.en]; vChat(); }
   else if(d.tab){ ui.tab = d.tab; vSpeak(); }
   else if(d.learn !== undefined){ ui.i = +d.learn; vLearn(); window.scrollTo(0,0); }
   else if(d.lopt !== undefined){
